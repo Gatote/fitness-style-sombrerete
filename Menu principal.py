@@ -1,6 +1,13 @@
 import pandas as pd
 import mysql.connector
 import streamlit as st
+# Configurar la página de Streamlit
+st.set_page_config(
+    page_title="FITNESS STYLE SOMBRERETE",
+    layout="wide",  # Cambiar el diseño a "wide" para aprovechar más espacio horizontal
+    initial_sidebar_state="collapsed",  # Colapsar la barra lateral inicialmente
+)
+
 
 def consulta_venta_diaria():
     try:
