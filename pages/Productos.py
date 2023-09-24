@@ -144,6 +144,78 @@ with col2_product:
 
 
         
+def mod_product(id, name, description, quantity, price, cost, profit):
+    # Establecer una conexión a la base de datos
+    conn = mysql.connector.connect(
+        host="localhost",
+        user="admin",
+        password="admin",
+        database="fitnes_style_db"
+    )
+    # Crear un cursor para ejecutar comandos en la base de datos
+    cursor = conn.cursor()
+
+    cursor.execute(f"UPDATE product SET name = '{name}', description = '{description}', quantity = {quantity}, price = {price}, cost = {cost}, profit = {profit} where id = {id}")
+    conn.commit()
+    
+    # Cerrar la conexión a la base de datos
+    conn.close()
+    time.sleep(1)
+    st.experimental_rerun()
+
+with st.expander(label = "Modificar producto existente", expanded = False):
+    try:
+        mod_name_product = st.selectbox("Producto", name_product, key="mod_name_product")
+        mod_name = st.checkbox(label = "Modificar nombre", value = False, key = "mod_name?", help = "Modificar también el nombre del producto seleccionado")
+        mod_index_product = name_product.index(mod_name_product)
+        mod_id = id_product[mod_index_product]
+            
+        if mod_name:
+            mod_new_name = st.text_input(label = "Nuevo nombre", max_chars = 255, placeholder = "Producto 1", value = mod_name_product)
+        else:
+            mod_new_name = mod_name_product
+
+
+        mod_description_product = st.text_area(label = "Descripción", value = f" {description_product[mod_index_product]}", disabled = False, key = "mod_description_product", max_chars = 255)
+
+        col1_mod_product, col2_mod_product, col3_mod_product, col4_mod_product = st.columns(4)
+
+        with col1_mod_product:
+            quantity_in_inventory = quantity_product[mod_index_product]
+            mod_quantity_product = st.number_input(label = "Cantida en inventario", value = quantity_in_inventory, min_value = 0, max_value = 99999, step = 1, key = "mod_quantity_product")
+        
+        with col2_mod_product:
+            price_of_product = int(price_product[mod_index_product])
+            mod_price_product = st.number_input(label = "Precio del produto", value = price_of_product, min_value = 0, max_value = 99999, step = 1, key = "mod_price_product")
+
+        with col3_mod_product:
+            cost_of_product = int(cost_product[mod_index_product])
+            mod_cost_product = st.number_input(label = "Costo del produto", value = cost_of_product, min_value = 0, max_value = 99999, step = 1, key = "mod_cost_product")
+
+        with col4_mod_product:
+            mod_profit_product = st.number_input(label = "Ganacia del produto", value = mod_price_product - mod_cost_product, min_value = 0, max_value = 99999, step = 1, key = "mod_profit_product", disabled = True)
+        
+        st.info(body = "El producto cambiarará en lo siguiente", icon = "✔")
+
+        # Datos individuales
+        old_data = {
+            '': ['Antes del cambio', 'Después del cambio'],
+            'Nombre': [name_product[mod_index_product], mod_new_name],
+            'Descripción': [description_product[mod_index_product], mod_description_product],
+            'Cantidad en inventario': [quantity_in_inventory, mod_quantity_product],
+            'Precio': [price_of_product, mod_price_product],
+            'Costo': [cost_of_product, mod_cost_product],
+            'Ganancia': [price_of_product - cost_of_product, mod_profit_product]
+        }
+
+        df = pd.DataFrame(old_data)
+        st.dataframe(data = df, hide_index = True)
+        if st.button(label = "Modificar producto", disabled = mod_quantity_product < 1 or mod_quantity_product > 99999, key = "confirm_mod_product"):
+            mod_product(mod_id, mod_new_name, mod_description_product, mod_quantity_product, mod_price_product, mod_cost_product, mod_profit_product)
+    except ValueError:
+        st.warning("No hay productos registrados")
+
+            
 
 
 
@@ -153,7 +225,7 @@ with col2_product:
 
 
 # Crear un DataFrame de Pandas con los resultados y establecer los encabezados
-df = pd.DataFrame(resultados, columns=['Producto', 'Descripcion', 'Cantidad en inventario'])
+df = pd.DataFrame(resultados, columns=['Producto', 'Descripción', 'Cantidad en inventario'])
 
 # Mostrar el DataFrame en Streamlit
 st.subheader('Existencia de productos')

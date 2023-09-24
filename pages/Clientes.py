@@ -23,7 +23,7 @@ def consulta_deuda_clientes():
     finally:
         conn.close()
 
-def query_client(name, lastname, colony, address, cellphone):
+def validate_client(name, lastname, colony, address, cellphone):
     try:
         # Establecer una conexión a la base de datos
         conn = mysql.connector.connect(
@@ -88,12 +88,130 @@ with st.expander(label = "Agregar cliente", expanded = False):
         st.error("Se requiere un apellido válido y no vacio")
     elif add_client_cellphone == "":
         st.error("Se requiere un numero válido y no vacio")
-    if query_client(add_client_name, add_client_lastname, add_client_colony, add_client_address, add_client_cellphone):
+    if validate_client(add_client_name, add_client_lastname, add_client_colony, add_client_address, add_client_cellphone):
         st.info("Ya hay un registro idéntico")
     elif st.button(label = "Registrar cliente", key = "confirm_client_data", help = "Subir los datos al sistema"):
        add_new_client(add_client_name, add_client_lastname, add_client_colony, add_client_address, add_client_cellphone)
 
         
+def mod_client(id, name, lastname, colony, address, cellphone):
+    # Establecer una conexión a la base de datos
+    conn = mysql.connector.connect(
+        host="localhost",
+        user="admin",
+        password="admin",
+        database="fitnes_style_db"
+    )
+    # Crear un cursor para ejecutar comandos en la base de datos
+    cursor = conn.cursor()
+    if colony == None and address == None:
+        #st.error("1")
+        cursor.execute(f"UPDATE client SET name = '{name}', lastname = '{lastname}', colony = NULL, address = NULL, cellphone = '{cellphone}' where id = {id}")
+    elif address == None and not colony == None:
+        #st.error("2")
+        cursor.execute(f"UPDATE client SET name = '{name}', lastname = '{lastname}', colony = '{colony}', address = NULL, cellphone = '{cellphone}' where id = {id}")
+    elif colony == None and not address == None:
+        #st.error("3")
+        cursor.execute(f"UPDATE client SET name = '{name}', lastname = '{lastname}', colony = NULL, address = '{address}', cellphone = '{cellphone}' where id = {id}")
+    else:
+        cursor.execute(f"UPDATE client SET name = '{name}', lastname = '{lastname}', colony = '{colony}', address = '{address}', cellphone = '{cellphone}' where id = {id}")
+    conn.commit()
+    
+    # Cerrar la conexión a la base de datos
+    conn.close()
+    time.sleep(1)
+    st.experimental_rerun()
+
+def query_clients():
+    try:
+        # Establecer una conexión a la base de datos
+        conn = mysql.connector.connect(
+            host="localhost",
+            user="admin",
+            password="admin",
+            database="fitnes_style_db"
+        )
+        # Crear un cursor para ejecutar comandos en la base de datos
+        cursor = conn.cursor()
+        # Ejecutar una consulta SQL real para seleccionar datos de una tabla
+        cursor.execute("SELECT * FROM client")  # Reemplaza 'nombre_de_la_tabla' con el nombre de tu tabla real
+        resultados = cursor.fetchall()
+        return resultados
+    except Exception as e:
+        st.error(f"Error: {e}")
+    finally:
+        conn.close()
+# Obtener los resultados de la consulta
+resultados = query_clients()
+id_client = [fila[0] for fila in resultados]
+name_client = [fila[1] for fila in resultados]
+lastname_client = [fila[2] for fila in resultados]
+colony_client = [fila[3] for fila in resultados]
+address_client = [fila[4] for fila in resultados]
+cellphone_client = [fila[5] for fila in resultados]
+# Combinar nombres y apellidos en una lista
+full_name_client = [f"{nombre} {apellido}" for nombre, apellido in zip(name_client, lastname_client)]
+
+
+with st.expander(label = "Modificar cliente existente", expanded = False):
+    try:
+        mod_name_client = st.selectbox("Cliente", full_name_client, key="mod_name_client")
+        mod_name = st.checkbox(label = "Modificar nombre", value = False, key = "mod_name?", help = "Modificar también el nombre del producto seleccionado")
+        mod_index_client = full_name_client.index(mod_name_client)
+        mod_id = id_client[mod_index_client]
+            
+        if mod_name:
+            col1_mod_name, col2_mod_lastname = st.columns(2)
+            with col1_mod_name:
+                mod_new_name_client = st.text_input(label = "Nuevo nombre", max_chars = 255, placeholder = "Juan", value = name_client[mod_index_client], key = "mod_new_name_client")
+            with col2_mod_lastname:
+                mod_new_lastname_client = st.text_input(label = "Nuevo apellido", max_chars = 255, placeholder = "Ramirez", value = lastname_client[mod_index_client], key = "mod_new_lastname_client")
+
+        else:
+            mod_new_name_client = name_client[mod_index_client]
+            mod_new_lastname_client = lastname_client[mod_index_client]
+
+        col1_mod_product, col2_mod_product, col3_mod_product = st.columns([3, 5, 2])
+
+        with col1_mod_product:
+            colony_value = colony_client[mod_index_client]
+            if colony_value is None:
+                colony_value = ""  # Si es None, asigna una cadena vacía
+            mod_colony_client = st.text_input(label="Colonia", value=colony_value, key="mod_colony_client")
+            if mod_colony_client == "":
+                mod_colony_client = None  # Si es None, asigna una cadena vacía
+
+        
+        with col2_mod_product:
+            address_value = address_client[mod_index_client]
+            if address_value is None:
+                address_value = ""  # Si es None, asigna una cadena vacía
+            mod_address_client = st.text_input(label = "Dirección", value = address_value, key = "mod_address_client")
+            if mod_address_client == "":
+                mod_address_client = None  # Si es None, asigna una cadena vacía
+
+        with col3_mod_product:
+            mod_cellphone_client = st.text_input(label = "Telefono de contacto", value = cellphone_client[mod_index_client], key = "mod_cellphone_client")
+
+        
+        st.info(body = "El producto cambiarará en lo siguiente", icon = "✔")
+
+        # Datos individuales
+        old_data = {
+            '': ['Antes del cambio', 'Después del cambio'],
+            'Nombre': [name_client[mod_index_client], mod_new_name_client],
+            'Apellido': [lastname_client[mod_index_client], mod_new_lastname_client],
+            'Colonia': [colony_client[mod_index_client], mod_colony_client],
+            'Dirección': [address_client[mod_index_client], mod_address_client],
+            'Telefono de contacto': [cellphone_client[mod_index_client], mod_cellphone_client]
+        }
+
+        df = pd.DataFrame(old_data)
+        st.dataframe(data = df, hide_index = True)
+        if st.button(label = "Modificar cliente", disabled = mod_new_name_client == "" or not validar_entrada(mod_new_name_client) or mod_new_lastname_client == "" or not validar_entrada(mod_new_lastname_client), key = "confirm_mod_client"):
+            mod_client(mod_id, mod_new_name_client, mod_new_lastname_client, mod_colony_client, mod_address_client, mod_cellphone_client)
+    except ValueError:
+        st.warning("No hay productos registrados")
 
 
 

@@ -153,7 +153,7 @@ def check_sale_id():
 # Obtener los resultados de la consulta
 resultados = consulta_productos()
 id_product = [fila[0] for fila in resultados]
-name_product = [fila[1] for fila in resultados]
+name_client = [fila[1] for fila in resultados]
 description_product = [fila[2] for fila in resultados]
 quantity_product = [fila[3] for fila in resultados]
 price_product = [fila[4] for fila in resultados]
@@ -164,13 +164,13 @@ st.header(body = "Agregar venta")
 selected_client = st.selectbox(label = "Seleccione el cliente", options = name_client, key = "list_clients")
 id_client = id_client[name_client.index(selected_client)]
 if selected_client:
-    selected_products = st.multiselect(label = "Seleccione los productos", options = name_product, key = "list_products")
+    selected_products = st.multiselect(label = "Seleccione los productos", options = name_client, key = "list_products")
 
     total = 0
     quantity_products = list()
     for i in selected_products:
         col1_quantity, col2_quantity = st.columns(2)
-        product_index = name_product.index(i)
+        product_index = name_client.index(i)
         with col1_quantity:
             quantity_selected_product = st.slider(label = f"Cantidad de {i} {description_product[product_index]}", min_value = 1, max_value = quantity_product[product_index], key = f"{i}_quantity")
             quantity_products.append(quantity_selected_product)
@@ -191,7 +191,7 @@ if selected_client:
                 new_sale(id_client)
                 id_sale_new_sale_product = check_sale_id()
                 for i in selected_products:
-                    id_product_new_sale_product = id_product[name_product.index(i)]
+                    id_product_new_sale_product = id_product[name_client.index(i)]
                     quantity_new_sale_product = quantity_products[cont]
                     st.write("")
                     new_sale_product(id_sale_new_sale_product, id_product_new_sale_product, quantity_new_sale_product)
