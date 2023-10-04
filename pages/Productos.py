@@ -219,9 +219,7 @@ with st.expander(label = "Modificar producto existente", expanded = False):
 # Crear un DataFrame de Pandas con los resultados y establecer los encabezados
 df = pd.DataFrame(resultados, columns=['Producto', 'Descripción', 'Cantidad en inventario'])
 
-# Mostrar el DataFrame en Streamlit
 st.subheader('Existencia de productos')
-st.dataframe(df, hide_index=1)
 
 # Obtener los resultados de la consulta
 col1, col2 = st.columns(2)
@@ -237,3 +235,7 @@ with col2:
 
 
 
+if len(df) > 5:
+    st.dataframe(df, hide_index=1, height = 248)
+else:
+    st.dataframe(df, hide_index=1)
