@@ -44,7 +44,7 @@ def consulta_stock():
         # Crear un cursor para ejecutar comandos en la base de datos
         cursor = conn.cursor()
         # Ejecutar una consulta SQL real para seleccionar datos de una tabla
-        cursor.execute("SELECT * FROM stock")  # Reemplaza 'nombre_de_la_tabla' con el nombre de tu tabla real
+        cursor.execute("SELECT CONCAT(product_id, ' - ', product_name), product_description, total_pieces_in_stock FROM stock")  # Reemplaza 'nombre_de_la_tabla' con el nombre de tu tabla real
         resultados = cursor.fetchall()
         return resultados
     except Exception as e:
@@ -216,14 +216,6 @@ with st.expander(label = "Modificar producto existente", expanded = False):
         st.warning("No hay productos registrados")
 
             
-
-
-
-
-
-
-
-
 # Crear un DataFrame de Pandas con los resultados y establecer los encabezados
 df = pd.DataFrame(resultados, columns=['Producto', 'Descripción', 'Cantidad en inventario'])
 

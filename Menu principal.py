@@ -23,11 +23,10 @@ def consulta_venta_diaria():
         # Ejecutar una consulta SQL real para seleccionar datos de una tabla
         cursor.execute("SELECT * FROM sales_info_daily")  # Reemplaza 'nombre_de_la_tabla' con el nombre de tu tabla real
         resultados = cursor.fetchall()
+        conn.close()
         return resultados
     except Exception as e:
-        st.error(f"Error: {e}")
-    finally:
-        conn.close()
+        st.info(f"No hay conexion al servidor")
 
 # Obtener los resultados de la consulta
 resultados = consulta_venta_diaria()

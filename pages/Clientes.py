@@ -64,7 +64,7 @@ def add_new_client(name, lastname, colony, address, cellphone):
 
 resultados = consulta_deuda_clientes()
 
-df_client = pd.DataFrame(resultados, columns = ["Id","Nombre","Apellido","Colonia","Dirección","Celular"])
+df_client = pd.DataFrame(resultados, columns = ["Id","Nombre","Apellido","Colonia","Dirección","Celular","Deuda","Comenterios"])
 st.write("Listado de los clientes")
 st.dataframe(df_client, hide_index=1)
 
@@ -149,6 +149,8 @@ lastname_client = [fila[2] for fila in resultados]
 colony_client = [fila[3] for fila in resultados]
 address_client = [fila[4] for fila in resultados]
 cellphone_client = [fila[5] for fila in resultados]
+debt_client = [fila[6] for fila in resultados]
+comment_client = [fila[7] for fila in resultados]
 # Combinar nombres y apellidos en una lista
 full_name_client = [f"{nombre} {apellido}" for nombre, apellido in zip(name_client, lastname_client)]
 
@@ -156,7 +158,7 @@ full_name_client = [f"{nombre} {apellido}" for nombre, apellido in zip(name_clie
 with st.expander(label = "Modificar cliente existente", expanded = False):
     try:
         mod_name_client = st.selectbox("Cliente", full_name_client, key="mod_name_client")
-        mod_name = st.checkbox(label = "Modificar nombre", value = False, key = "mod_name?", help = "Modificar también el nombre del producto seleccionado")
+        mod_name = st.checkbox(label = "Modificar nombre", value = False, key = "mod_name?", help = "Modificar también el nombre del cliente seleccionado")
         mod_index_client = full_name_client.index(mod_name_client)
         mod_id = id_client[mod_index_client]
             
@@ -194,7 +196,7 @@ with st.expander(label = "Modificar cliente existente", expanded = False):
             mod_cellphone_client = st.text_input(label = "Telefono de contacto", value = cellphone_client[mod_index_client], key = "mod_cellphone_client")
 
         
-        st.info(body = "El producto cambiarará en lo siguiente", icon = "✔")
+        st.info(body = "El cliente cambiarará en lo siguiente", icon = "✔")
 
         # Datos individuales
         old_data = {
@@ -203,7 +205,9 @@ with st.expander(label = "Modificar cliente existente", expanded = False):
             'Apellido': [lastname_client[mod_index_client], mod_new_lastname_client],
             'Colonia': [colony_client[mod_index_client], mod_colony_client],
             'Dirección': [address_client[mod_index_client], mod_address_client],
-            'Telefono de contacto': [cellphone_client[mod_index_client], mod_cellphone_client]
+            'Telefono de contacto': [cellphone_client[mod_index_client], mod_cellphone_client],
+            'Balance': [debt_client[mod_index_client], None],
+            'Comentarios': [comment_client[mod_index_client], None]
         }
 
         df = pd.DataFrame(old_data)
@@ -211,7 +215,7 @@ with st.expander(label = "Modificar cliente existente", expanded = False):
         if st.button(label = "Modificar cliente", disabled = mod_new_name_client == "" or not validar_entrada(mod_new_name_client) or mod_new_lastname_client == "" or not validar_entrada(mod_new_lastname_client), key = "confirm_mod_client"):
             mod_client(mod_id, mod_new_name_client, mod_new_lastname_client, mod_colony_client, mod_address_client, mod_cellphone_client)
     except ValueError:
-        st.warning("No hay productos registrados")
+        st.warning("No hay clientes registrados")
 
 
 
@@ -227,7 +231,7 @@ def consulta_deuda_clientes():
             database="fitnes_style_db"
         )
         cursor = conn.cursor()
-        cursor.execute("SELECT client_id, concat(client_name, ' ', client_lastname), client_cellphone, balance  FROM client_debt")
+        cursor.execute("SELECT id, concat(name, ' ', lastname), cellphone, debt  FROM client")
         resultados = cursor.fetchall()
         return resultados
     except Exception as e:
@@ -243,3 +247,4 @@ df = pd.DataFrame(resultados, columns = ["id","Nombre completo","Telefono celula
 st.subheader('Balance de deudas de clientes',)
 st.write("Un balance negativo se refiere a deuda del comercio al cliente")
 st.dataframe(df, hide_index=1)
+st.button(label = "Recargar")
