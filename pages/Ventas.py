@@ -258,7 +258,7 @@ if selected_client:
                     sale_with_debt = True
                 else:
                     sale_with_debt = False
-                if st.checkbox(label = "Confirmar datos", value = False):
+                if st.checkbox(label = "Confirmar datos", value = False, key = "confirm_data_for_sale"):
                     if st.button(label = "Confirmar", key = "add_new_sale", help = "Completar venta de los productos seleccionado anteriormente", ):
                         cont = 0
                         new_sale(id_client)
@@ -273,9 +273,13 @@ if selected_client:
                             cont = cont + 1
                         if sale_with_debt:
                             update_client_debt(id_client, debt, debt_comments)
-                        
-                        # time.sleep(1)
-                        # st.experimental_rerun()
+                        progress_text = "Realizando venta ..."
+                        my_bar = st.progress(0, text=progress_text)
+                        for percent_complete in range(100):
+                            time.sleep(0.01)
+                            my_bar.progress(percent_complete + 1, text=progress_text)
+                        time.sleep(1)
+                        st.experimental_rerun()
     else:
         st.warning(body = "No hay productos en existencia para vender", icon = "⚠")
         st.info(body = "Agrega mas producto desde el apartado de productos", icon = "ℹ")
@@ -332,3 +336,180 @@ if resultados and resultados[0][0] > 0:
 
 else:
     st.warning(body = "No hay ventas registradas", icon = "⚠")
+
+
+
+
+
+def update_sale_product(id_sale, id_product, quantity, final_price, final_cost):
+    try:
+        # Establecer una conexión a la base de datos
+        conn = mysql.connector.connect(
+            host="localhost",
+            user="admin",
+            password="admin",
+            database="fitnes_style_db"
+        )
+        # Crear un cursor para ejecutar comandos en la base de datos
+        cursor = conn.cursor()
+        # Ejecutar una consulta SQL real para seleccionar datos de una tabla
+        cursor.execute(f"UPDATE sale_product SET quantity = {quantity}, final_price = {final_price}, final_cost = {final_cost} WHERE id_sale = {id_sale} AND id_product = {id_product}")
+        #st.write(f"INSERT INTO sale_product (id_sale, id_product, quantity, final_price, final_cost, final_profit) VALUES ({id_sale}, {id_product}, {quantity}, {final_price}, {final_cost}, {final_price} - {final_cost})")
+        conn.commit()
+    except Exception as e:
+        st.error(f"Error: {e}")
+    finally:
+        conn.close()
+
+
+
+def query_sales_mod():
+    try:
+        # Establecer una conexión a la base de datos
+        conn = mysql.connector.connect(
+            host="localhost",
+            user="admin",
+            password="admin",
+            database="fitnes_style_db"
+        )
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM sale")  # Selecciona solo los IDs de las ventas
+        resultados = cursor.fetchall()
+        return [row[0] for row in resultados]  # Devuelve una lista de IDs
+    except Exception as e:
+        st.error(f"Error: {e}")
+    finally:
+        conn.close()
+
+st.subheader("Modificar venta")
+# Obtiene la lista de IDs de ventas
+ids_ventas = query_sales_mod()
+
+# Crea un select box para seleccionar el número de venta
+numero_venta = st.selectbox("Número de Venta", ids_ventas)
+
+# Luego, puedes usar el número de venta seleccionado para realizar otras consultas o acciones según tus necesidades.
+# Por ejemplo, puedes mostrar los detalles de la venta seleccionada en otro lugar de la aplicación.
+
+# Para obtener los detalles de la venta seleccionada:
+def obtener_detalle_venta(numero_venta):
+    try:
+        conn = mysql.connector.connect(
+            host="localhost",
+            user="admin",
+            password="admin",
+            database="fitnes_style_db"
+        )
+        cursor = conn.cursor()
+        cursor.execute(f"SELECT id_sale, id_product, p.name, sp.quantity, st.total_pieces_in_stock + sp.quantity, final_price, final_cost, final_profit FROM sale_product sp INNER JOIN product p on p.id = sp.id_product INNER JOIN stock st on st.product_id = p.id WHERE sp.id_sale = {numero_venta}")
+        #st.write(f"SELECT id_sale, id_product, p.name, sp.quantity, st.total_pieces_in_stock + sp.quantity, final_price, final_cost, final_profit FROM sale_product sp INNER JOIN product p on p.id = sp.id_product INNER JOIN stock st on st.product_id = p.id WHERE sp.id_sale = {numero_venta}")
+        resultados = cursor.fetchall()  # Obtener todas las filas correspondientes a la venta
+        return resultados
+    except Exception as e:
+        st.error(f"Error: {e}")
+    finally:
+        conn.close()
+
+detalles_venta = obtener_detalle_venta(numero_venta)
+id_sale = [fila[0] for fila in detalles_venta]
+id_product = [fila[1] for fila in detalles_venta]
+name_productt = [fila[2] for fila in detalles_venta]
+quantity_product = [fila[3] for fila in detalles_venta]
+quantity_product_avalaible = [fila[4] for fila in detalles_venta]
+price_product = [fila[5] for fila in detalles_venta]
+cost_product = [fila[6] for fila in detalles_venta]
+profit_product = [fila[7] for fila in detalles_venta]
+
+# if numero_venta is not None:
+#     if detalles_venta:
+#         st.subheader("Detalles de la Venta Seleccionada")
+#         df_detalle_venta = pd.DataFrame(detalles_venta, columns=["id_sale", "id_product", "p.name", "sp.quantity", "Cantidad disponible", "final_price", "final_cost", "final profit"])
+#         st.dataframe(df_detalle_venta, hide_index=True)
+    
+#name_product
+# Convierte ambas listas en conjuntos
+set_a = set(name_product)
+set_b = set(name_productt)
+
+# Crea una nueva lista con los elementos de b que no están en a
+ramaining_products = [x for x in name_productt if x not in name_product]
+
+selected_products = st.multiselect(label = "Seleccione los productos a modificar de la venta", options = name_productt, key = "list_of_products_from_sale_to_modify")
+if ramaining_products:
+    selected_products_to_add = st.multiselect(label = "Seleccione los productos a agregar en la venta", options = ramaining_products, key = "list_of_products_to_add_to_sale")
+
+total = 0
+quantity_products = list()
+new_price_products = list()
+new_cost_products = list()
+for i in selected_products:
+    col1_quantity, col2_quantity, col3_quantity = st.columns([2.2, 4.3, 4.5])
+    product_index = name_productt.index(i)
+    with col1_quantity:
+        edit_price = st.checkbox(label = "Modificar precio", value = False, key = f"{i}_edit_price_in_sale", help = f"Modificar el precio de venta de {i}")
+
+    with col2_quantity:
+        quantity = int(quantity_product[product_index])
+        if quantity_product_avalaible[product_index] > 0:
+            quantity_selected_product = st.slider(label = f"Cantidad de {i}", min_value = 0, max_value = int(quantity_product_avalaible[product_index]), value = quantity_product[product_index], key = f"{i}_quantity_to_modify")
+        else:
+            quantity_selected_product = 0
+            st.warning(f"No hay {i} en existencia!")
+
+        quantity_products.append(quantity_selected_product)
+    with col3_quantity:
+        if quantity_selected_product != 1:
+            ss = "unidades"
+        else:
+            ss = "unidad"
+        if not edit_price:
+            st.info(body = f"precio: {price_product[product_index]} * {quantity_selected_product} {ss} ${price_product[product_index]*quantity_selected_product}")
+            total = total + price_product[product_index] * quantity_selected_product
+            mod_price_product = price_product[product_index]
+            new_price_products.append(mod_price_product)
+            new_cost_products.append(cost_product[product_index])
+        else:
+            col1_price_product, col2_price_product = st.columns(2)
+            with col1_price_product:
+                mod_price_product = st.number_input(label = f"Precio de {i  }", min_value = 0, max_value = 99999, value = int(price_product[product_index]), step = 1, key = f"{i}_price_product_to_modify")
+            with col2_price_product:
+                st.info(body = f"{quantity_selected_product} {ss} ${mod_price_product*quantity_selected_product}")
+                total = total + mod_price_product * quantity_selected_product
+            new_price_products.append(mod_price_product)
+            new_cost_products.append(cost_product[product_index])
+if selected_products != []:
+    if total != 0:
+        st.success(body = f"El total de la cuenta será de: ${total}")
+        total_payment = st.number_input(label = "Total de pago", min_value = 0, max_value = int(total), value = int(total))
+        if total_payment != total:
+            if  debt_client > 0:
+                debt_text = f" el cual cuenta con una deuda actual de {debt_client}"
+            else:
+                debt_text = ""
+            st.info(body = f"La diferencia es de ${int(total - total_payment)}, la cual se aumentará a la deuda total del cliente '{selected_client}'{debt_text}", icon = "ℹ")
+            debt = int(total - total_payment)
+            debt_comments = st.text_area(label = "Comentarios", value = f"{debt_comment_client}", key = "comments_client_debt")
+            sale_with_debt = True
+        else:
+            sale_with_debt = False
+        if st.checkbox(label = "Confirmar datos", value = False, key = "confirm_data_for_edit_sale"):
+            if st.button(label = "Confirmar", key = "edit_sale", help = "Completar venta de los productos seleccionado anteriormente", ):
+                cont = 0
+                id_sale_new_sale_product = numero_venta
+                for i in selected_products:
+                    id_product_new_sale_product = id_product[name_product.index(i)]
+                    quantity_new_sale_product = quantity_products[cont]
+                    final_price_product = new_price_products[cont]
+                    final_cost_product = new_cost_products[cont]
+                    st.write("")
+                    update_sale_product(id_sale_new_sale_product, id_product_new_sale_product, quantity_new_sale_product, final_price_product, final_cost_product)
+                    cont = cont + 1
+                if sale_with_debt:
+                    update_client_debt(id_client, debt, debt_comments)
+                progress_text = "Realizando venta ..."
+                my_bar = st.progress(0, text=progress_text)
+                for percent_complete in range(100):
+                    time.sleep(0.01)
+                    my_bar.progress(percent_complete + 1, text=progress_text)
+                time.sleep(1)
+                st.experimental_rerun()

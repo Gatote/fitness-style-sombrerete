@@ -1,1 +1,1 @@
-falta pagar deuda de cliente
+falta agregar productos a la modificacion de una lista
