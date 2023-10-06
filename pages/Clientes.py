@@ -66,7 +66,11 @@ resultados = consulta_deuda_clientes()
 
 df_client = pd.DataFrame(resultados, columns = ["Id","Nombre","Apellido","Colonia","Dirección","Celular","Deuda","Comenterios"])
 st.write("Listado de los clientes")
-st.dataframe(df_client, hide_index=1)
+
+if len(df_client) > 5:
+    st.dataframe(df_client, hide_index=1, height = 248)
+else:
+    st.dataframe(df_client, hide_index=1)
 
 import re
 def validar_entrada(texto):
@@ -81,17 +85,18 @@ with st.expander(label = "Agregar cliente", expanded = False):
     add_client_address = st.text_input(label = "Dirección", value = "", max_chars = 255, key = "add_client_address", help = "Dirección del cliente", placeholder = "Avenida Principal")
     add_client_cellphone = st.text_input(label = "Telefono de contacto", value = "", max_chars = 15, key = "add_client_cellphone", help = "Numero telefonico para contactar al cliente", placeholder = "(123) 456-7890")
 
+    if validate_client(add_client_name, add_client_lastname, add_client_colony, add_client_address, add_client_cellphone):
+        st.info("Ya hay un registro idéntico")
 
     if add_client_name == "" or not validar_entrada(add_client_name):
         st.error("Se requiere un nombre válido y no vacio")
     elif add_client_lastname == "" or not validar_entrada(add_client_lastname):
         st.error("Se requiere un apellido válido y no vacio")
     elif add_client_cellphone == "":
-        st.error("Se requiere un numero válido y no vacio")
-    if validate_client(add_client_name, add_client_lastname, add_client_colony, add_client_address, add_client_cellphone):
-        st.info("Ya hay un registro idéntico")
-    elif st.button(label = "Registrar cliente", key = "confirm_client_data", help = "Subir los datos al sistema"):
-       add_new_client(add_client_name, add_client_lastname, add_client_colony, add_client_address, add_client_cellphone)
+        st.error("Se requiere un numero telefónico válido y no vacio")
+    else:
+        if st.button(label = "Registrar cliente", key = "confirm_client_data", help = "Subir los datos al sistema", disabled = add_client_name == "" or not validar_entrada(add_client_name) or add_client_lastname == "" or not validar_entrada(add_client_lastname) or add_client_cellphone == ""):
+            add_new_client(add_client_name, add_client_lastname, add_client_colony, add_client_address, add_client_cellphone)
 
         
 def mod_client(id, name, lastname, colony, address, cellphone):
@@ -141,6 +146,98 @@ def query_clients():
         st.error(f"Error: {e}")
     finally:
         conn.close()
+
+
+
+
+
+
+def consulta_deuda_clientes(with_debt):
+    try:
+
+        # Establecer una conexión a la base de datos
+        conn = mysql.connector.connect(
+            host="localhost",
+            user="admin",
+            password="admin",
+            database="fitnes_style_db"
+        )
+        cursor = conn.cursor()
+        if with_debt:
+            cursor.execute("SELECT id, concat(name, ' ', lastname), debt, debt_comment  FROM client where debt >= 1")
+        else:
+            cursor.execute("SELECT id, concat(name, ' ', lastname), cellphone, debt, debt_comment  FROM client")
+        resultados = cursor.fetchall()
+        return resultados
+    except Exception as e:
+        st.error(f"Error: {e}")
+    finally:
+        conn.close()
+
+
+def pay_back_debt(id, ammount, comment):
+    try:
+
+        # Establecer una conexión a la base de datos
+        conn = mysql.connector.connect(
+            host="localhost",
+            user="admin",
+            password="admin",
+            database="fitnes_style_db"
+        )
+        cursor = conn.cursor()
+        cursor.execute(f"UPDATE client SET debt = debt - {ammount}, debt_comment = '{comment}' WHERE id = {id}")
+        progress_text = "Realizando pago ..."
+        my_bar = st.progress(0, text=progress_text)
+        for percent_complete in range(100):
+            time.sleep(0.01)
+            my_bar.progress(percent_complete + 1, text=progress_text)
+        time.sleep(1)
+        my_bar.empty()
+        conn.commit()
+        st.experimental_rerun()
+    except Exception as e:
+        st.error(f"Error: {e}")
+    finally:
+        conn.close()
+
+
+resultados = consulta_deuda_clientes(False)
+
+df = pd.DataFrame(resultados, columns = ["id","Nombre completo","Telefono celular","Balance (Deuda)","Comentarios"])
+
+st.subheader('Balance de deudas de clientes',)
+st.write("Un balance negativo se refiere a deuda del comercio al cliente")
+if len(df) > 5:
+    st.dataframe(df, hide_index=1, height = 248)
+else:
+    st.dataframe(df, hide_index=1)
+#st.button(label = "Recargar")
+
+
+st.subheader(body = "Pago de deudas")
+query_debt_clients = consulta_deuda_clientes(True)
+if not query_debt_clients:
+    st.info(body = "No hay clientes con una deuda actual!", icon = "✔")
+else:
+    id_client = [fila[0] for fila in query_debt_clients]
+    name_client = [fila[1] for fila in query_debt_clients]
+    debt_client = [fila[2] for fila in query_debt_clients]
+    debt_comment_client = [fila[3] for fila in query_debt_clients]
+    name_client_to_pay = st.selectbox(label = "Cliente que pagará deuda", options = name_client)
+    index_client_to_pay = name_client.index(name_client_to_pay)
+    payment_col1, payment_col2 = st.columns(2)
+    with payment_col1:
+        ammount_to_pay = st.number_input(label = "Monto a pagar", min_value = 0, max_value = debt_client[index_client_to_pay], value = 0, step = 100)
+    with payment_col2:
+        st.info(body = f"La deuda total es de ${debt_client[index_client_to_pay]}")
+    comment_client_to_pay = st.text_area(label = "Comentarios", value = debt_comment_client[index_client_to_pay])
+    if ammount_to_pay == 0:
+        st.info(body = "Agrega una cantidad a pagar")
+    else:
+        if st.button(label = f"Pagar ${ammount_to_pay}"):
+            pay_back_debt(id_client[index_client_to_pay], ammount_to_pay, comment_client_to_pay)
+
 # Obtener los resultados de la consulta
 resultados = query_clients()
 id_client = [fila[0] for fila in resultados]
@@ -153,44 +250,6 @@ debt_client = [fila[6] for fila in resultados]
 comment_client = [fila[7] for fila in resultados]
 # Combinar nombres y apellidos en una lista
 full_name_client = [f"{nombre} {apellido}" for nombre, apellido in zip(name_client, lastname_client)]
-
-
-
-
-
-
-def consulta_deuda_clientes():
-    try:
-        # Establecer una conexión a la base de datos
-        conn = mysql.connector.connect(
-            host="localhost",
-            user="admin",
-            password="admin",
-            database="fitnes_style_db"
-        )
-        cursor = conn.cursor()
-        cursor.execute("SELECT id, concat(name, ' ', lastname), cellphone, debt  FROM client")
-        resultados = cursor.fetchall()
-        return resultados
-    except Exception as e:
-        st.error(f"Error: {e}")
-    finally:
-        conn.close()
-
-
-resultados = consulta_deuda_clientes()
-
-df = pd.DataFrame(resultados, columns = ["id","Nombre completo","Telefono celular","Balance (Deuda)"])
-
-st.subheader('Balance de deudas de clientes',)
-st.write("Un balance negativo se refiere a deuda del comercio al cliente")
-if len(df) > 5:
-    st.dataframe(df, hide_index=1, height = 248)
-else:
-    st.dataframe(df, hide_index=1)
-#st.button(label = "Recargar")
-
-
 
 
 
@@ -246,9 +305,7 @@ try:
         'Apellido': [lastname_client[mod_index_client], mod_new_lastname_client],
         'Colonia': [colony_client[mod_index_client], mod_colony_client],
         'Dirección': [address_client[mod_index_client], mod_address_client],
-        'Telefono de contacto': [cellphone_client[mod_index_client], mod_cellphone_client],
-        'Balance': [debt_client[mod_index_client], None],
-        'Comentarios': [comment_client[mod_index_client], None]
+        'Telefono de contacto': [cellphone_client[mod_index_client], mod_cellphone_client]
     }
 
     df = pd.DataFrame(old_data)

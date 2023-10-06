@@ -28,6 +28,9 @@ def consulta_venta_diaria():
     except Exception as e:
         st.info(f"No hay conexion al servidor")
 
+st.title(body = "Fitness Style Sombrerete   ")
+
+
 # Obtener los resultados de la consulta
 resultados = consulta_venta_diaria()
 

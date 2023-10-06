@@ -290,13 +290,13 @@ if resultados and resultados[0][0] > 0:
     censorship_level = st.selectbox(label="Seleccione cómo visualizar las ventas", options=["Ventas con fecha y clientes", "Ventas con productos, clientes y total", "Ventas con productos, clientes, costos y ganancias"])
 
     if censorship_level == "Ventas con fecha y clientes":
-        query = "SELECT s.id, s.date, c.name FROM sale s INNER JOIN client c"
+        query = "SELECT s.id, s.date, c.name FROM sale s INNER JOIN client c ORDER BY id DESC"
         query_columns = ["Id", "Fecha", "Nombre"]
     elif censorship_level == "Ventas con productos, clientes y total":
-        query = "SELECT sp.id_sale, CONCAT(c.name, ' ', c.lastname), p.name, p.price * sp.quantity FROM sale_product sp INNER JOIN product p ON p.id = sp.id_product INNER JOIN sale s on s.id = sp.id_sale INNER JOIN client c ON c.id = s.id_client "
+        query = "SELECT sp.id_sale, CONCAT(c.name, ' ', c.lastname), p.name, p.price * sp.quantity FROM sale_product sp INNER JOIN product p ON p.id = sp.id_product INNER JOIN sale s on s.id = sp.id_sale INNER JOIN client c ON c.id = s.id_client ORDER BY s.id DESC"
         query_columns = ["Id", "Cliente", "Producto", "Total"]
     elif censorship_level == "Ventas con productos, clientes, costos y ganancias":
-        query = "SELECT *  FROM sales_info"
+        query = "SELECT *  FROM sales_info ORDER BY sale_number DESC"
         query_columns = ["Id", "Fecha", "Productos (cantidades)", "Costo total", "Precio total", "Ganancia total", "Nombre del cliente"]
     else:
         query = "SELECT 'Hubo un error interno'"
@@ -314,12 +314,21 @@ if resultados and resultados[0][0] > 0:
         df = pd.DataFrame(modified_resultados, columns=query_columns)
 
         st.write("Agrupado de ventas, los precios individuales se muestran en el concentrado de productos")
-        st.dataframe(df, hide_index=True)
+        
+        if len(df) > 5:
+            st.dataframe(df, hide_index=1, height = 248)
+        else:
+            st.dataframe(df, hide_index=1)
     elif resultados:
 
         df = pd.DataFrame(resultados, columns=query_columns)
 
         st.write("Agrupado de ventas, los precios individuales se muestran en el concentrado de productos")
-        st.dataframe(df, hide_index=True)
+        
+        if len(df) > 5:
+            st.dataframe(df, hide_index=1, height = 248)
+        else:
+            st.dataframe(df, hide_index=1)
+
 else:
     st.warning(body = "No hay ventas registradas", icon = "⚠")
