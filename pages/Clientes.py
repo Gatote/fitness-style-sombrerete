@@ -15,7 +15,7 @@ def consulta_deuda_clientes():
             database="fitnes_style_db"
         )
         cursor = conn.cursor()
-        cursor.execute("SELECT *  FROM client")
+        cursor.execute("SELECT id, name, lastname, colony, address FROM client")
         resultados = cursor.fetchall()
         return resultados
     except Exception as e:
@@ -64,7 +64,7 @@ def add_new_client(name, lastname, colony, address, cellphone):
 
 resultados = consulta_deuda_clientes()
 
-df_client = pd.DataFrame(resultados, columns = ["Id","Nombre","Apellido","Colonia","Dirección","Celular","Deuda","Comenterios"])
+df_client = pd.DataFrame(resultados, columns = ["Id","Nombre","Apellido","Colonia","Dirección"])
 st.write("Listado de los clientes")
 
 if len(df_client) > 5:
