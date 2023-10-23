@@ -94,15 +94,36 @@ def current_date():
         # Ejecutar una consulta SQL real para seleccionar datos de una tabla
         cursor.execute("SELECT CURRENT_DATE")  # Reemplaza 'nombre_de_la_tabla' con el nombre de tu tabla real
         resultados = cursor.fetchall()
-        return resultados
+        return resultados[0][0]
     except Exception as e:
         st.error(f"Error: {e}")
     finally:
         conn.close()
 
+def min_date():
+    try:
+        # Establecer una conexión a la base de datos
+        conn = mysql.connector.connect(
+            host="localhost",
+            user="admin",
+            password="admin",
+            database="fitnes_style_db"
+        )
+        # Crear un cursor para ejecutar comandos en la base de datos
+        cursor = conn.cursor()
+        # Ejecutar una consulta SQL real para seleccionar datos de una tabla
+        cursor.execute("SELECT min(date) FROM sale")  # Reemplaza 'nombre_de_la_tabla' con el nombre de tu tabla real
+        resultados = cursor.fetchall()
+        return resultados[0][0]
+    except Exception as e:
+        st.error(f"Error: {e}")
+    finally:
+        conn.close()
+
+
 def new_sale(id_client):
     try:
-        date = current_date()[0][0]
+        date = current_date()
         # Establecer una conexión a la base de datos
         conn = mysql.connector.connect(
             host="localhost",
@@ -142,7 +163,7 @@ def new_sale_product(id_sale, id_product, quantity, final_price, final_cost):
 
 def check_sale_id():
     try:
-        date = current_date()[0][0]
+        date = current_date()
         # Establecer una conexión a la base de datos
         conn = mysql.connector.connect(
             host="localhost",
@@ -308,17 +329,28 @@ if resultados and resultados[0][0] > 0:
     st.header(body='Listado de ventas')
     censorship_level = st.selectbox(label="Seleccione cómo visualizar las ventas", options=["Ventas con fecha y clientes", "Ventas con productos, clientes y total", "Ventas con productos, clientes, costos y ganancias"])
 
+
+    min_date_for_query = min_date()
+    max_date_for_query = current_date()
+    if st.checkbox(label = "Ajustar rángo de fechas", value = False, key = "date_range", help = "Elegir una fecha de inicio y una fecha final para ver un rango de ventas"):
+        min_date_for_query = st.date_input(label = "Fecha desde", value = min_date(), min_value = min_date(), max_value = current_date(), key = "since_date", help = "Fecha desde comenzará a mostrar las ventas")
+        max_date_for_query = st.date_input(label = "Fecha hasta", value = current_date(), min_value = min_date(), max_value = current_date(), key = "to_date", help = "Fecha desde comenzará a mostrar las ventas")
+
     if censorship_level == "Ventas con fecha y clientes":
-        query = "SELECT s.id, s.date, c.name FROM sale s INNER JOIN client c ORDER BY id DESC"
+        query = f"SELECT s.id, s.date, c.name FROM sale s INNER JOIN client c WHERE s.date >= '{min_date_for_query}' and s.date <= '{max_date_for_query}' ORDER BY id DESC"
         query_columns = ["Id", "Fecha", "Nombre"]
     elif censorship_level == "Ventas con productos, clientes y total":
-        query = "SELECT sp.id_sale, CONCAT(c.name, ' ', c.lastname), p.name, p.price * sp.quantity FROM sale_product sp INNER JOIN product p ON p.id = sp.id_product INNER JOIN sale s on s.id = sp.id_sale INNER JOIN client c ON c.id = s.id_client ORDER BY s.id DESC"
+        query = f"SELECT sp.id_sale, CONCAT(c.name, ' ', c.lastname), p.name, p.price * sp.quantity FROM sale_product sp INNER JOIN product p ON p.id = sp.id_product INNER JOIN sale s on s.id = sp.id_sale INNER JOIN client c ON c.id = s.id_client WHERE s.date >= '{min_date_for_query}' and s.date <= '{max_date_for_query}' ORDER BY s.id DESC"
         query_columns = ["Id", "Cliente", "Producto", "Total"]
     elif censorship_level == "Ventas con productos, clientes, costos y ganancias":
-        query = "SELECT *  FROM sales_info ORDER BY sale_number DESC"
+        query = f"SELECT *  FROM sales_info WHERE sale_date >= '{min_date_for_query}' and sale_date <= '{max_date_for_query}' ORDER BY sale_number DESC"
         query_columns = ["Id", "Fecha", "Productos (cantidades)", "Costo total", "Precio total", "Ganancia total", "Nombre del cliente"]
     else:
         query = "SELECT 'Hubo un error interno'"
+
+
+
+
     #st.write(query)
     resultados = query_sales(query)
 

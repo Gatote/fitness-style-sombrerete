@@ -100,8 +100,6 @@ with st.expander(label = "Agregar cliente", expanded = False):
     add_client_address = st.text_input(label = "Dirección", value = "", max_chars = 255, key = "add_client_address", help = "Dirección del cliente", placeholder = "Avenida Principal")
     add_client_cellphone = st.text_input(label = "Telefono de contacto", value = "", max_chars = 15, key = "add_client_cellphone", help = "Numero telefonico para contactar al cliente", placeholder = "(123) 456-7890")
 
-    if validate_client(add_client_name, add_client_lastname, add_client_colony, add_client_address, add_client_cellphone):
-        st.info("Ya hay un registro idéntico")
 
     if add_client_name == "" or not validar_entrada(add_client_name):
         st.error("Se requiere un nombre válido y no vacio")
@@ -110,8 +108,11 @@ with st.expander(label = "Agregar cliente", expanded = False):
     elif add_client_cellphone == "":
         st.error("Se requiere un numero telefónico válido y no vacio")
     else:
-        if st.button(label = "Registrar cliente", key = "confirm_client_data", help = "Subir los datos al sistema", disabled = add_client_name == "" or not validar_entrada(add_client_name) or add_client_lastname == "" or not validar_entrada(add_client_lastname) or add_client_cellphone == ""):
-            add_new_client(add_client_name, add_client_lastname, add_client_colony, add_client_address, add_client_cellphone)
+        if validate_client(add_client_name, add_client_lastname, add_client_colony, add_client_address, add_client_cellphone):
+            st.info("Ya hay un registro idéntico")
+        else:
+            if st.button(label = "Registrar cliente", key = "confirm_client_data", help = "Subir los datos al sistema", disabled = add_client_name == "" or not validar_entrada(add_client_name) or add_client_lastname == "" or not validar_entrada(add_client_lastname) or add_client_cellphone == ""):
+                add_new_client(add_client_name, add_client_lastname, add_client_colony, add_client_address, add_client_cellphone)
 
         
 def mod_client(id, name, lastname, colony, address, cellphone):
