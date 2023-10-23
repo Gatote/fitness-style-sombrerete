@@ -344,8 +344,8 @@ if resultados and resultados[0][0] > 0:
     min_date_for_query = min_date()
     max_date_for_query = current_date()
     if st.checkbox(label = "Ajustar rángo de fechas", value = False, key = "date_range", help = "Elegir una fecha de inicio y una fecha final para ver un rango de ventas"):
-        min_date_for_query = st.date_input(label = "Fecha desde", value = min_date(), min_value = min_date(), max_value = current_date(), key = "since_date", help = "Fecha desde comenzará a mostrar las ventas")
-        max_date_for_query = st.date_input(label = "Fecha hasta", value = current_date(), min_value = min_date(), max_value = current_date(), key = "to_date", help = "Fecha desde comenzará a mostrar las ventas")
+        min_date_for_query = st.date_input(label = "Fecha desde", value = min_date(), min_value = min_date(), max_value = current_date(), key = "since_date", help = "Fecha desde donde comenzará a mostrar las ventas")
+        max_date_for_query = st.date_input(label = "Fecha hasta", value = current_date(), min_value = min_date(), max_value = current_date(), key = "to_date", help = "Fecha desde donde terminará de mostrar las ventas")
 
     if censorship_level == "Ventas con fecha y clientes":
         query = f"SELECT s.id, s.date, c.name FROM sale s INNER JOIN client c WHERE s.date >= '{min_date_for_query}' and s.date <= '{max_date_for_query}' ORDER BY id DESC"
