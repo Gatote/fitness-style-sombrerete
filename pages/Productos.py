@@ -2,6 +2,22 @@ import pandas as pd
 import mysql.connector
 import streamlit as st
 import time
+try:
+    # Establecer una conexión a la base de datos
+    conn = mysql.connector.connect(
+        host="localhost",
+        user="admin",
+        password="admin",
+        database="fitnes_style_db"
+    )
+    # Crear un cursor para ejecutar comandos en la base de datos
+    cursor = conn.cursor()
+    # Ejecutar una consulta SQL real para seleccionar datos de una tabla
+    cursor.execute("SELECT 'si'")
+except Exception as e:
+    st.info(body = "No hay conexion al servidor")
+    exit()
+
 
 def consulta_productos():
     try:
@@ -58,7 +74,7 @@ cantidades = [fila[2] for fila in resultados]
 
 st.title("Productos",help="Concentrado todo de acerca de los productos, asi mismo las existencias de cada uno")
 
-st.header("Añadir productos")
+st.header("anadir productos")
 col1_product, col2_product = st.columns(2)
      
 def add_product(id,quantity):
@@ -103,29 +119,29 @@ def add_new_product(name_product, description_product, quantity_product, price_p
 
 
 with col1_product:
-    st.subheader("Añadir producto existente")
+    st.subheader("anadir producto existente")
     try:
-        añadir_producto_seleccionado = st.selectbox("Producto", name_product, key="añadir_producto_existente")
-        indice = name_product.index(añadir_producto_seleccionado)
-        id = name_product.index(añadir_producto_seleccionado)
+        anadir_producto_seleccionado = st.selectbox("Producto", name_product, key="anadir_producto_existente")
+        indice = name_product.index(anadir_producto_seleccionado)
+        id = name_product.index(anadir_producto_seleccionado)
         
         st.text_input("Descripcion",f" {description_product[indice]}",disabled=True)
-        cantidad = st.number_input("Cantidad a añadir",value=0,min_value=0,max_value=99999,step=1)
+        cantidad = st.number_input("Cantidad a anadir",value=0,min_value=0,max_value=99999,step=1)
 
 
-        st.write(f"Se añadirán {cantidad} unidades de {añadir_producto_seleccionado}")
-        añadir = st.button("Añadir producto", disabled=cantidad<1 or cantidad>99999)
-        if añadir:
+        st.write(f"Se anadirán {cantidad} unidades de {anadir_producto_seleccionado}")
+        anadir = st.button("anadir producto", disabled=cantidad<1 or cantidad>99999)
+        if anadir:
             add_product(id,cantidad)
     except ValueError:
         st.warning("No hay productos registrados")
 
             
 with col2_product:
-    st.subheader("Añadir producto nuevo")
-    add_name_product = st.text_input("Nombre del producto","",255,"añadir_producto_nuevo",placeholder="Producto 1")
-    add_descripcion_product = st.text_input("Descripcion del producto","",255,"añadir_descripcion_producto_nuevo",placeholder="Sabor fresa, light")
-    add_quantity_product = st.number_input(label = "Cantidad del producto", min_value = 0, max_value = 99999,key = "añadir_cantidad_producto_nuevo", step = 1, value = 0)
+    st.subheader("anadir producto nuevo")
+    add_name_product = st.text_input("Nombre del producto","",255,"anadir_producto_nuevo",placeholder="Producto 1")
+    add_descripcion_product = st.text_input("Descripcion del producto","",255,"anadir_descripcion_producto_nuevo",placeholder="Sabor fresa, light")
+    add_quantity_product = st.number_input(label = "Cantidad del producto", min_value = 0, max_value = 99999,key = "anadir_cantidad_producto_nuevo", step = 1, value = 0)
     col1_add_new_product, col2_add_new_product, col3_add_new_product = st.columns(3)
     with col1_add_new_product:
         add_price_product = st.number_input(label = "Precio al cliente", min_value = 0, max_value = 99999, value = 0, step = 1, key = "add_price_product")
@@ -136,7 +152,7 @@ with col2_product:
     if add_name_product in name_product:
         st.error("El nombre registrado ya existe, usar otro")
     else:
-        confirm_add_new_product = st.button("Añadir producto", disabled=add_quantity_product<1 or add_quantity_product>99999 or add_profit_product<0 or add_name_product in name_product,key = "confirm_add_new_product")
+        confirm_add_new_product = st.button("anadir producto", disabled=add_quantity_product<1 or add_quantity_product>99999 or add_profit_product<0 or add_name_product in name_product,key = "confirm_add_new_product")
         if confirm_add_new_product:
             add_new_product(add_name_product, add_descripcion_product, add_quantity_product, add_price_product, add_cost_product, add_profit_product)
 

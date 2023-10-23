@@ -2,6 +2,21 @@ import pandas as pd
 import mysql.connector
 import streamlit as st
 import time
+try:
+    # Establecer una conexión a la base de datos
+    conn = mysql.connector.connect(
+        host="localhost",
+        user="admin",
+        password="admin",
+        database="fitnes_style_db"
+    )
+    # Crear un cursor para ejecutar comandos en la base de datos
+    cursor = conn.cursor()
+    # Ejecutar una consulta SQL real para seleccionar datos de una tabla
+    cursor.execute("SELECT 'si'")
+except Exception as e:
+    st.info(body = "No hay conexion al servidor")
+    exit()
 st.title("Ventas")
 
 def query_sales(query):

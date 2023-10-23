@@ -1,1 +1,1 @@
-falta agregar productos a la modificacion de una lista
+pip install -r requirements.txt
