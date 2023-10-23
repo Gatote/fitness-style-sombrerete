@@ -121,9 +121,8 @@ def min_date():
         conn.close()
 
 
-def new_sale(id_client):
+def new_sale(id_client, date):
     try:
-        date = current_date()
         # Establecer una conexión a la base de datos
         conn = mysql.connector.connect(
             host="localhost",
@@ -234,6 +233,12 @@ else:
     selected_client = None
 if selected_client:
     if name_product:
+        change_date_col1, change_date_col2 = st.columns(2)
+        with change_date_col1:
+            change_date_for_sale = st.checkbox(label = "Escojer fecha específica para la venta", value = False, key = "change_date_for_sale", help = "Cambiar fecha que se registrará en la venta, por defecto se introduce la fecha actual")
+            if change_date_for_sale:
+                with change_date_col2:
+                    new_date_for_sale = st.date_input(label = "Fecha deseada", value = current_date(), min_value = None, max_value = None, key = "date_for_sale", help = "Fecha que se registrará en la venta")
         selected_products = st.multiselect(label = "Seleccione los productos", options = name_product, key = "list_products")
         total = 0
         quantity_products = list()
@@ -297,7 +302,13 @@ if selected_client:
                 if st.checkbox(label = "Confirmar datos", value = False, key = "confirm_data_for_sale"):
                     if st.button(label = "Confirmar", key = "add_new_sale", help = "Completar venta de los productos seleccionado anteriormente", ):
                         cont = 0
-                        new_sale(id_client)
+
+                        if change_date_for_sale:
+                            date = new_date_for_sale
+                        else:
+                            date = current_date()
+
+                        new_sale(id_client, date)
                         id_sale_new_sale_product = check_sale_id()
                         for i in selected_products:
                             id_product_new_sale_product = id_product[name_product.index(i)]
