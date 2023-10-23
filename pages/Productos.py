@@ -74,7 +74,6 @@ cantidades = [fila[2] for fila in resultados]
 
 st.title("Productos",help="Concentrado todo de acerca de los productos, asi mismo las existencias de cada uno")
 
-st.header("anadir productos")
 col1_product, col2_product = st.columns(2)
      
 def add_product(id,quantity):
@@ -118,9 +117,11 @@ def add_new_product(name_product, description_product, quantity_product, price_p
     st.experimental_rerun()
 
 
-with col1_product:
-    st.subheader("anadir producto existente")
-    try:
+with col2_product:
+    st.subheader("Añadir producto existente")
+    if not name_product:
+        st.warning("No hay productos registrados")
+    else:
         anadir_producto_seleccionado = st.selectbox("Producto", name_product, key="anadir_producto_existente")
         indice = name_product.index(anadir_producto_seleccionado)
         id = name_product.index(anadir_producto_seleccionado)
@@ -133,12 +134,9 @@ with col1_product:
         anadir = st.button("anadir producto", disabled=cantidad<1 or cantidad>99999)
         if anadir:
             add_product(id,cantidad)
-    except ValueError:
-        st.warning("No hay productos registrados")
-
             
-with col2_product:
-    st.subheader("anadir producto nuevo")
+with col1_product:
+    st.subheader("Añadir producto nuevo")
     add_name_product = st.text_input("Nombre del producto","",255,"anadir_producto_nuevo",placeholder="Producto 1")
     add_descripcion_product = st.text_input("Descripcion del producto","",255,"anadir_descripcion_producto_nuevo",placeholder="Sabor fresa, light")
     add_quantity_product = st.number_input(label = "Cantidad del producto", min_value = 0, max_value = 99999,key = "anadir_cantidad_producto_nuevo", step = 1, value = 0)
